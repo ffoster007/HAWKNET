@@ -1,10 +1,12 @@
-# Tauri + React + Typescript
+<p align="center">
+  <a href="#" target="_blank" rel="noopener noreferrer">
+    <img src="./public/Banner.png" alt="avacx_banner" />
+  </a>
+</p>
 
-This template should help get you started developing with Tauri, React and Typescript in Vite.
+## Overview
+HAWKNET is a cutting-edge, open-source, cross-platform desktop application designed to provide users with a seamless experience in managing and interacting with various AI models. Built using Tauri and Rust, Hawknet offers a lightweight and efficient solution for developers and enthusiasts looking to harness the power of AI in their workflows.
 
-## Recommended IDE Setup
-
-- [VS Code](https://code.visualstudio.com/) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
 
 ## Getting Started
 
