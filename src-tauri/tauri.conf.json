@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "hawknet",
+  "productName": "Hawknet",
   "version": "0.1.0",
   "identifier": "io.github.ffoster007.hawknet",
   "build": {
@@ -12,9 +12,9 @@
   "app": {
     "windows": [
       {
-        "title": "hawknet",
-        "width": 800,
-        "height": 600
+        "title": "Hawknet",
+        "width": 1280,
+        "height": 800
       }
     ],
     "security": {
