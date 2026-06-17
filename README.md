@@ -10,6 +10,11 @@ HAWKNET is a cutting-edge, open-source, cross-platform desktop application desig
 
 ## Getting Started
 
+Copy environment
+```
+cp ./src-tauri/.env.example ./src-tauri/.env
+```
+
 ```
 # 1. Install dependencies
 pnpm install
