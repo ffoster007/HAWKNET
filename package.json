@@ -15,6 +15,7 @@
     "@xyflow/react": "^12.11.0",
     "cytoscape": "^3.34.0",
     "litegraph.js": "^0.7.18",
+    "lucide-react": "^1.21.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
   },
