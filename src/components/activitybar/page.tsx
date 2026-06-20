@@ -1,12 +1,12 @@
 import { useState } from "react";
 import {
-  Crosshair,
-  Network,
-  ShieldAlert,
+  Layers,
   Webhook,
   Terminal,
   Settings,
   Plug,
+  Box,
+  Boxes,
 } from "lucide-react";
 
 /**
@@ -22,9 +22,9 @@ import {
 
 export type ActivityId =
   | "recon"
-  | "graph"
-  | "threats"
-  | "endpoints"
+  | "box"
+  | "analyzer"
+  | "boxes"
   | "terminal";
 
 interface ActivityItem {
@@ -34,10 +34,10 @@ interface ActivityItem {
 }
 
 const PRIMARY_ITEMS: ActivityItem[] = [
-  { id: "recon", label: "Recon", icon: Crosshair },
-  { id: "graph", label: "Graph", icon: Network },
-  { id: "threats", label: "Threats", icon: ShieldAlert },
-  { id: "endpoints", label: "Endpoints", icon: Webhook },
+  { id: "recon", label: "Workspace", icon: Layers },
+  { id: "box", label: "WorkBox", icon: Box },
+  { id: "boxes", label: "Boxes", icon: Boxes },
+  { id: "analyzer", label: "Analyzer", icon: Webhook },
   { id: "terminal", label: "Terminal", icon: Terminal },
 ];
 
