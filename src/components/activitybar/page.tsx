@@ -6,7 +6,6 @@ import {
   Settings,
   Plug,
   Box,
-  Boxes,
 } from "lucide-react";
 
 /**
@@ -24,7 +23,6 @@ export type ActivityId =
   | "recon"
   | "box"
   | "analyzer"
-  | "boxes"
   | "terminal";
 
 interface ActivityItem {
@@ -36,7 +34,6 @@ interface ActivityItem {
 const PRIMARY_ITEMS: ActivityItem[] = [
   { id: "recon", label: "Workspace", icon: Layers },
   { id: "box", label: "WorkBox", icon: Box },
-  { id: "boxes", label: "Boxes", icon: Boxes },
   { id: "analyzer", label: "Analyzer", icon: Webhook },
   { id: "terminal", label: "Terminal", icon: Terminal },
 ];
@@ -44,19 +41,18 @@ const PRIMARY_ITEMS: ActivityItem[] = [
 interface ActivityBarProps {
   active?: ActivityId;
   onSelect?: (id: ActivityId) => void;
+  isTerminalOpen?: boolean;
 }
 
 export default function ActivityBar({
   active = "recon",
   onSelect,
+  isTerminalOpen = false,
 }: ActivityBarProps) {
-  const [activeId, setActiveId] = useState<ActivityId>(active);
   const [hoveredId, setHoveredId] = useState<ActivityId | null>(null);
 
   function handleSelect(id: ActivityId) {
-    setActiveId(id);
     onSelect?.(id);
-    // TODO: hook up view switching / router push here
   }
 
   return (
@@ -67,7 +63,8 @@ export default function ActivityBar({
       {/* top: primary views */}
       <ul className="flex flex-col items-center gap-1">
         {PRIMARY_ITEMS.map(({ id, label, icon: Icon }) => {
-          const isActive = activeId === id;
+          // Terminal ใช้ isTerminalOpen แทน active สำหรับการเช็คสถานะ
+          const isActive = id === "terminal" ? isTerminalOpen : active === id;
           const isHovered = hoveredId === id;
 
           return (
@@ -75,7 +72,8 @@ export default function ActivityBar({
               <button
                 type="button"
                 aria-label={label}
-                aria-current={isActive ? "page" : undefined}
+                aria-current={id !== "terminal" && isActive ? "page" : undefined}
+                aria-pressed={id === "terminal" ? isTerminalOpen : undefined}
                 onClick={() => handleSelect(id)}
                 onMouseEnter={() => setHoveredId(id)}
                 onMouseLeave={() => setHoveredId(null)}
@@ -89,7 +87,7 @@ export default function ActivityBar({
                 {/* active indicator bar */}
                 <span
                   className={[
-                    "absolute left-0 top-1/2 h-5 w-[2px] -translate-y-1/2 rounded-full  transition-opacity duration-100",
+                    "absolute left-0 top-1/2 h-5 w-[2px] -translate-y-1/2 rounded-full transition-opacity duration-100",
                     isActive ? "opacity-100" : "opacity-0",
                   ].join(" ")}
                 />
