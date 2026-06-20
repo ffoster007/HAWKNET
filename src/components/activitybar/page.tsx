@@ -8,17 +8,6 @@ import {
   Box,
 } from "lucide-react";
 
-/**
- * HAWKNET — ActivityBar
- * Vertical icon rail, VS-Code-style. Template only: wire up real
- * view-switching / routing logic where marked below.
- *
- * Palette (matches existing egui UI):
- *   bg      #0b0e0c  near-black
- *   accent  #e8ff6b  acid green
- *   muted   #6b7268  inactive icon
- */
-
 export type ActivityId =
   | "recon"
   | "box"
@@ -42,17 +31,25 @@ interface ActivityBarProps {
   active?: ActivityId;
   onSelect?: (id: ActivityId) => void;
   isTerminalOpen?: boolean;
+  isSidebarOpen?: boolean;
 }
 
 export default function ActivityBar({
   active = "recon",
   onSelect,
   isTerminalOpen = false,
+  isSidebarOpen = false,
 }: ActivityBarProps) {
   const [hoveredId, setHoveredId] = useState<ActivityId | null>(null);
 
   function handleSelect(id: ActivityId) {
     onSelect?.(id);
+  }
+
+  function isItemActive(id: ActivityId): boolean {
+    if (id === "terminal") return isTerminalOpen;
+    if (id === "box") return isSidebarOpen;
+    return active === id;
   }
 
   return (
@@ -63,8 +60,7 @@ export default function ActivityBar({
       {/* top: primary views */}
       <ul className="flex flex-col items-center gap-1">
         {PRIMARY_ITEMS.map(({ id, label, icon: Icon }) => {
-          // Terminal ใช้ isTerminalOpen แทน active สำหรับการเช็คสถานะ
-          const isActive = id === "terminal" ? isTerminalOpen : active === id;
+          const isActive = isItemActive(id);
           const isHovered = hoveredId === id;
 
           return (
@@ -72,8 +68,8 @@ export default function ActivityBar({
               <button
                 type="button"
                 aria-label={label}
-                aria-current={id !== "terminal" && isActive ? "page" : undefined}
-                aria-pressed={id === "terminal" ? isTerminalOpen : undefined}
+                aria-current={id !== "terminal" && id !== "box" && isActive ? "page" : undefined}
+                aria-pressed={id === "terminal" || id === "box" ? isActive : undefined}
                 onClick={() => handleSelect(id)}
                 onMouseEnter={() => setHoveredId(id)}
                 onMouseLeave={() => setHoveredId(null)}
@@ -85,12 +81,6 @@ export default function ActivityBar({
                 ].join(" ")}
               >
                 {/* active indicator bar */}
-                <span
-                  className={[
-                    "absolute left-0 top-1/2 h-5 w-[2px] -translate-y-1/2 rounded-full transition-opacity duration-100",
-                    isActive ? "opacity-100" : "opacity-0",
-                  ].join(" ")}
-                />
                 <Icon size={20} strokeWidth={1.75} />
               </button>
 
