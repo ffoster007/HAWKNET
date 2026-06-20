@@ -3,16 +3,22 @@ import Activitybar, { type ActivityId } from "./components/activitybar/page";
 import Workspace from "./components/workspace/page";
 import Analyzer from "./components/analyzer/page";
 import Terminal from "./components/ui/terminal/terminal";
+import Sidebar from "./components/ui/sidebar/sidebar";
+import { useSidebar } from "./hooks/useSidebar";
 import "./App.css";
 
 function App() {
   const [activeView, setActiveView] = useState<ActivityId>("recon");
   const [isTerminalOpen, setIsTerminalOpen] = useState(false);
+  const { isOpen: isSidebarOpen, toggle: toggleSidebar } = useSidebar();
 
   const handleViewSelect = (id: ActivityId) => {
     if (id === "terminal") {
       // Toggle terminal panel
       setIsTerminalOpen(!isTerminalOpen);
+    } else if (id === "box") {
+      // Toggle sidebar
+      toggleSidebar();
     } else {
       setActiveView(id);
     }
@@ -24,12 +30,6 @@ function App() {
         return <Workspace />;
       case "analyzer":
         return <Analyzer />;
-      case "box":
-        return (
-          <div className="flex items-center justify-center h-full">
-            <p className="text-lg text-zinc-400">WorkBox - Coming Soon</p>
-          </div>
-        );
       default:
         return <Workspace />;
     }
@@ -41,7 +41,20 @@ function App() {
         active={activeView} 
         onSelect={handleViewSelect}
         isTerminalOpen={isTerminalOpen}
+        isSidebarOpen={isSidebarOpen}
       />
+
+      {/* Sidebar - slides from left */}
+      <div
+        className={[
+          "border-r border-[#1c211d] bg-[#0b0e0c] overflow-hidden",
+          isSidebarOpen ? "w-[300px]" : "w-0",
+        ].join(" ")}
+      >
+        <div className="h-full w-[300px] overflow-hidden">
+          <Sidebar />
+        </div>
+      </div>
 
       <div className="flex min-h-0 flex-1 flex-col">
         {/* Main content area */}
