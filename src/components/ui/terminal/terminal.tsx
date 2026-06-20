@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 
 /**
  * HAWKNET — Terminal Panel
- * Basic terminal emulator UI component
+ * Basic terminal emulator UI component with resizable feature
  */
 
 export default function Terminal() {
@@ -70,10 +70,12 @@ export default function Terminal() {
 
   return (
     <div className="flex h-full flex-col bg-[#0b0e0c] font-mono text-sm">
-      {/* Terminal header */}
+      {/* Terminal header with resize hint */}
       <div className="flex items-center justify-between border-b border-[#1c211d] px-4 py-2">
         <span className="text-xs text-[#6b7268]">Terminal</span>
-        <div className="w-16" /> {/* Spacer for alignment */}
+        <span className="text-[10px] text-[#6b7268] opacity-50">
+          ↕ Drag top border to resize
+        </span>
       </div>
 
       {/* Terminal output */}

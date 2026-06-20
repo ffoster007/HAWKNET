@@ -14,8 +14,16 @@ export type ActivityId =
   | "analyzer"
   | "terminal";
 
+type BottomActionId = "connections" | "settings";
+
 interface ActivityItem {
   id: ActivityId;
+  label: string;
+  icon: React.ComponentType<{ size?: number; strokeWidth?: number }>;
+}
+
+interface BottomItem {
+  id: BottomActionId;
   label: string;
   icon: React.ComponentType<{ size?: number; strokeWidth?: number }>;
 }
@@ -25,6 +33,11 @@ const PRIMARY_ITEMS: ActivityItem[] = [
   { id: "box", label: "WorkBox", icon: Box },
   { id: "analyzer", label: "Analyzer", icon: Webhook },
   { id: "terminal", label: "Terminal", icon: Terminal },
+];
+
+const BOTTOM_ITEMS: BottomItem[] = [
+  { id: "connections", label: "Connections", icon: Plug },
+  { id: "settings", label: "Settings", icon: Settings },
 ];
 
 interface ActivityBarProps {
@@ -40,10 +53,19 @@ export default function ActivityBar({
   isTerminalOpen = false,
   isSidebarOpen = false,
 }: ActivityBarProps) {
-  const [hoveredId, setHoveredId] = useState<ActivityId | null>(null);
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
 
   function handleSelect(id: ActivityId) {
     onSelect?.(id);
+  }
+
+  function handleBottomAction(id: BottomActionId) {
+    if (id === "connections") {
+      // Trigger connections modal
+      const event = new CustomEvent('toggleConnections');
+      window.dispatchEvent(event);
+    }
+    // TODO: open settings panel for "settings"
   }
 
   function isItemActive(id: ActivityId): boolean {
@@ -80,7 +102,6 @@ export default function ActivityBar({
                     : "text-[#6b7268] hover:text-[#cfd6c8]",
                 ].join(" ")}
               >
-                {/* active indicator bar */}
                 <Icon size={20} strokeWidth={1.75} />
               </button>
 
@@ -100,19 +121,14 @@ export default function ActivityBar({
 
       {/* bottom: secondary actions */}
       <ul className="flex flex-col items-center gap-1">
-        {[
-          { id: "connections" as const, label: "Connections", icon: Plug },
-          { id: "settings" as const, label: "Settings", icon: Settings },
-        ].map(({ id, label, icon: Icon }) => (
+        {BOTTOM_ITEMS.map(({ id, label, icon: Icon }) => (
           <li key={id} className="relative">
             <button
               type="button"
               aria-label={label}
-              onMouseEnter={() => setHoveredId(id as ActivityId)}
+              onMouseEnter={() => setHoveredId(id)}
               onMouseLeave={() => setHoveredId(null)}
-              onClick={() => {
-                // TODO: open settings / connections panel
-              }}
+              onClick={() => handleBottomAction(id)}
               className="flex h-10 w-10 items-center justify-center rounded-md text-[#6b7268] transition-colors duration-100 hover:text-[#cfd6c8] cursor-pointer"
             >
               <Icon size={20} strokeWidth={1.75} />

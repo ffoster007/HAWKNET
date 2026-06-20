@@ -13,7 +13,7 @@ export default function Sidebar() {
         </h2>
         <button
           onClick={close}
-          className="rounded p-1 text-[#6b7268] hover:bg-[#1c211d] hover:text-[#cfd6c8] transition-colors"
+          className="rounded p-1 text-[#6b7268] hover:bg-[#1c211d] hover:text-[#cfd6c8] transition-colors cursor-pointer"
         >
           <X size={14} />
         </button>
@@ -23,6 +23,9 @@ export default function Sidebar() {
       <div className="flex-1 overflow-y-auto p-3">
         <p className="text-sm text-[#6b7268]">
           WorkBox content goes here...
+        </p>
+        <p className="text-xs text-[#6b7268] mt-2 opacity-50">
+          💡 Drag the right border to resize
         </p>
       </div>
     </div>
