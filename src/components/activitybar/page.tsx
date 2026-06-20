@@ -1,12 +1,12 @@
 import { useState } from "react";
 import {
-  Crosshair,
-  Network,
-  ShieldAlert,
+  Layers,
   Webhook,
   Terminal,
   Settings,
   Plug,
+  Box,
+  Boxes,
 } from "lucide-react";
 
 /**
@@ -22,9 +22,9 @@ import {
 
 export type ActivityId =
   | "recon"
-  | "graph"
-  | "threats"
-  | "endpoints"
+  | "box"
+  | "analyzer"
+  | "boxes"
   | "terminal";
 
 interface ActivityItem {
@@ -34,10 +34,10 @@ interface ActivityItem {
 }
 
 const PRIMARY_ITEMS: ActivityItem[] = [
-  { id: "recon", label: "Recon", icon: Crosshair },
-  { id: "graph", label: "Graph", icon: Network },
-  { id: "threats", label: "Threats", icon: ShieldAlert },
-  { id: "endpoints", label: "Endpoints", icon: Webhook },
+  { id: "recon", label: "Workspace", icon: Layers },
+  { id: "box", label: "WorkBox", icon: Box },
+  { id: "boxes", label: "Boxes", icon: Boxes },
+  { id: "analyzer", label: "Analyzer", icon: Webhook },
   { id: "terminal", label: "Terminal", icon: Terminal },
 ];
 
@@ -80,7 +80,7 @@ export default function ActivityBar({
                 onMouseEnter={() => setHoveredId(id)}
                 onMouseLeave={() => setHoveredId(null)}
                 className={[
-                  "group relative flex h-10 w-10 items-center justify-center rounded-md transition-colors duration-100 cursor-pointer",
+                  "group relative flex h-10 w-10 items-center justify-center rounded-md transition-colors cursor-pointer",
                   isActive
                     ? "text-[#e8ff6b]"
                     : "text-[#6b7268] hover:text-[#cfd6c8]",
@@ -89,7 +89,7 @@ export default function ActivityBar({
                 {/* active indicator bar */}
                 <span
                   className={[
-                    "absolute left-0 top-1/2 h-5 w-[2px] -translate-y-1/2 rounded-full bg-[#e8ff6b] transition-opacity duration-100",
+                    "absolute left-0 top-1/2 h-5 w-[2px] -translate-y-1/2 rounded-full  transition-opacity duration-100",
                     isActive ? "opacity-100" : "opacity-0",
                   ].join(" ")}
                 />
