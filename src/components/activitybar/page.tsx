@@ -80,7 +80,7 @@ export default function ActivityBar({
                 onMouseEnter={() => setHoveredId(id)}
                 onMouseLeave={() => setHoveredId(null)}
                 className={[
-                  "group relative flex h-10 w-10 items-center justify-center rounded-md transition-colors duration-100 cursor-pointer",
+                  "group relative flex h-10 w-10 items-center justify-center rounded-md transition-colors cursor-pointer",
                   isActive
                     ? "text-[#e8ff6b]"
                     : "text-[#6b7268] hover:text-[#cfd6c8]",
@@ -89,7 +89,7 @@ export default function ActivityBar({
                 {/* active indicator bar */}
                 <span
                   className={[
-                    "absolute left-0 top-1/2 h-5 w-[2px] -translate-y-1/2 rounded-full bg-[#e8ff6b] transition-opacity duration-100",
+                    "absolute left-0 top-1/2 h-5 w-[2px] -translate-y-1/2 rounded-full  transition-opacity duration-100",
                     isActive ? "opacity-100" : "opacity-0",
                   ].join(" ")}
                 />
