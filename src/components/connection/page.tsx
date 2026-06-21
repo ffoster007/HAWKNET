@@ -91,11 +91,6 @@ export default function Connections() {
       {/* Header */}
       <div className="flex items-center justify-between border-b border-[#1c211d] px-3 py-2">
         <div className="flex items-center gap-2">
-          <img 
-            src="/icon-connection.png" 
-            alt="Connections" 
-            className="w-4 h-4"
-          />
           <h2 className="text-xs font-semibold uppercase tracking-wider text-[#e8ff6b]">
             Connections
           </h2>
