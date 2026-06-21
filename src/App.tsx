@@ -10,32 +10,28 @@ import { useSidebar } from "./hooks/useSidebar";
 import { useConnections } from "./hooks/useConnections";
 import { useResizable, useTerminalResizable } from "./hooks/useResizable";
 import SettingsPanel from "./components/interfaces/Settings/page";
+import { AnalyzerProvider } from "./context/AnalyzerContext";
 import "./App.css";
 
-function App() {
+function AppContent() {
   const [activeView, setActiveView] = useState<ActivityId>("recon");
   const [isTerminalOpen, setIsTerminalOpen] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const { isOpen: isSidebarOpen, toggle: toggleSidebar } = useSidebar();
-  const { isOpen: isConnectionsOpen, close: closeConnections, open: openConnections } = useConnections();
+  const { isOpen: isConnectionsOpen, close: closeConnections } = useConnections();
   
   // Listen for connections toggle from ActivityBar
   useEffect(() => {
     const handleToggleConnections = () => {
-      // ใช้ open() หรือ toggle() ก็ได้
-      // ถ้าใช้ open() จะเปิดอย่างเดียว ไม่ปิด
-      // openConnections();
-      
-      // หรือใช้ toggle() ก็ได้
-      // แต่ถ้าใช้ toggle() ต้อง import toggle จาก useConnections
+      const event = new CustomEvent('toggleConnectionsModal');
+      window.dispatchEvent(event);
     };
     
     window.addEventListener('toggleConnections', handleToggleConnections);
-    
     return () => {
       window.removeEventListener('toggleConnections', handleToggleConnections);
     };
-  }, [openConnections]);
+  }, []);
   
   // Listen for settings toggle event
   useEffect(() => {
@@ -44,7 +40,6 @@ function App() {
     };
     
     window.addEventListener('toggleSettings', handleToggleSettings);
-    
     return () => {
       window.removeEventListener('toggleSettings', handleToggleSettings);
     };
@@ -180,6 +175,14 @@ function App() {
         </div>
       )}
     </div>
+  );
+}
+
+function App() {
+  return (
+    <AnalyzerProvider>
+      <AppContent />
+    </AnalyzerProvider>
   );
 }
 

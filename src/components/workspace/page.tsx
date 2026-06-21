@@ -26,18 +26,17 @@ import {
   type GraphNode,
   type GraphEdge,
 } from "../../lib/tauriApi";
+import { useAnalyzer } from "../../context/AnalyzerContext";
 
 // ── Polling interval (ms) ─────────────────────────────────────────────────────
 const POLL_MS = 1500;
 
 // ── Convert VulnGraph → React Flow nodes/edges ────────────────────────────────
 function toFlowElements(g: VulnGraph): { nodes: Node[]; edges: Edge[] } {
-  // ✅ แปลง GraphNode → React Flow Node
   const nodes: Node[] = g.nodes.map((n: GraphNode) => ({
     id: n.id,
     type: n.type,
     position: n.position,
-    // ✅ ใช้ type assertion เพื่อแปลง NodeData → Record<string, unknown>
     data: n.data as unknown as Record<string, unknown>,
   }));
   
@@ -68,10 +67,10 @@ export default function Workspace() {
   const [scanning, setScanning] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // ── Analyzer Context ─────────────────────────────────────────────────────
+  const { setScanResult, setLoading } = useAnalyzer();
+
   // ── React Flow state ─────────────────────────────────────────────────────
-  // ✅ ใช้ generics ให้ถูกต้อง: useNodesState<Node[]>() 
-  // แต่จริงๆแล้ว useNodesState รับ generic เป็นประเภทของ Node
-  // และคืนค่า [Node[], (nodes: Node[]) => void]
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
 
@@ -88,21 +87,29 @@ export default function Workspace() {
         if (job.status === "done" && job.graph) {
           setScanning(false);
           clearInterval(pollRef.current!);
+          
+          // ✅ แปลงข้อมูลสำหรับ React Flow
           const { nodes: n, edges: e } = toFlowElements(job.graph);
-          // ✅ setNodes รับ Node[] โดยตรง
           setNodes(n);
           setEdges(e);
+          
+          // ✅ ส่งข้อมูลไป Analyzer
+          setScanResult(job, job.graph);
+          setLoading(false);
+          
         } else if (job.status === "failed") {
           setScanning(false);
           clearInterval(pollRef.current!);
+          setLoading(false);
         }
       } catch (err) {
         console.error("Poll error:", err);
         setScanning(false);
         clearInterval(pollRef.current!);
+        setLoading(false);
       }
     }, POLL_MS);
-  }, [setNodes, setEdges]);
+  }, [setNodes, setEdges, setScanResult, setLoading]);
 
   useEffect(() => {
     return () => {
@@ -139,9 +146,11 @@ export default function Workspace() {
     setShowWarning(false);
     setScanning(true);
     setActiveJob(null);
-    // ✅ clear nodes และ edges
     setNodes([]);
     setEdges([]);
+    
+    // ✅ ตั้งค่า loading ใน Analyzer
+    setLoading(true);
 
     try {
       const jobId = await submitScan(target.trim(), targetType);
@@ -150,6 +159,7 @@ export default function Workspace() {
       console.error("Submit error:", err);
       setScanning(false);
       setError(String(err));
+      setLoading(false);
     }
   };
 
