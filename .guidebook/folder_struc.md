@@ -1,10 +1,10 @@
-
 ```
 HAWKNET
 ├─ .agents
 │  └─ SKILL.md
 ├─ .guidebook
 │  ├─ flow_libary.md
+│  ├─ folder_struc.md
 │  ├─ legal.md
 │  └─ temporary(gap).md
 ├─ CONTRIBUTING.md
@@ -15,16 +15,50 @@ HAWKNET
 │  └─ main.py
 ├─ data_fetch
 │  ├─ README.md
+│  ├─ go.mod
+│  ├─ internal
+│  │  ├─ ai
+│  │  │  └─ bridge.go
+│  │  ├─ config
+│  │  │  └─ config.go
+│  │  ├─ fingerprint
+│  │  │  └─ http.go
+│  │  ├─ graph
+│  │  │  └─ builder.go
+│  │  ├─ scanner
+│  │  │  ├─ dns.go
+│  │  │  ├─ pipeline.go
+│  │  │  ├─ port.go
+│  │  │  ├─ subdomain.go
+│  │  │  └─ types.go
+│  │  ├─ types
+│  │  │  └─ types.go
+│  │  └─ vuln
+│  │     ├─ intel.go
+│  │     └─ rules.go
 │  └─ main.go
 ├─ hkn_orchestrator
 │  ├─ newbranch
 │  └─ placeholder
+├─ i18n
+│  ├─ EN-English
+│  │  ├─ README-EN.md
+│  │  └─ en.json
+│  └─ TH-Thai
+│     ├─ README-TH.md
+│     └─ th.json
 ├─ index.html
 ├─ package.json
 ├─ pnpm-lock.yaml
 ├─ public
 │  ├─ AVACX.png
-│  └─ Banner.png
+│  ├─ Banner.png
+│  └─ llms
+│     ├─ Claude.png
+│     ├─ Gemini.png
+│     ├─ grok.png
+│     ├─ ollama.jpeg
+│     └─ openai.png
 ├─ scripts
 │  ├─ checklist.sh
 │  ├─ loading.sh
@@ -35,13 +69,19 @@ HAWKNET
 │  ├─ assets
 │  │  └─ react.svg
 │  ├─ components
+│  │  ├─ GraphperTree
+│  │  │  └─ placeholder
 │  │  ├─ activitybar
 │  │  │  └─ page.tsx
 │  │  ├─ analyzer
 │  │  │  └─ page.tsx
+│  │  ├─ connection
+│  │  │  └─ page.tsx
 │  │  ├─ interfaces
-│  │  ├─ layout
+│  │  │  └─ Settings
+│  │  │     └─ page.tsx
 │  │  ├─ popup
+│  │  │  └─ warning.tsx
 │  │  ├─ ui
 │  │  │  ├─ sidebar
 │  │  │  │  └─ sidebar.tsx
@@ -50,8 +90,15 @@ HAWKNET
 │  │  ├─ workbox
 │  │  │  └─ page.tsx
 │  │  └─ workspace
+│  │     ├─ SummaryBar.tsx
+│  │     ├─ nodes.tsx
 │  │     └─ page.tsx
 │  ├─ hooks
+│  │  ├─ useConnections.ts
+│  │  ├─ useResizable.ts
+│  │  └─ useSidebar.ts
+│  ├─ lib
+│  │  └─ tauriApi.ts
 │  ├─ main.tsx
 │  ├─ styles
 │  ├─ types
@@ -86,8 +133,12 @@ HAWKNET
 │  │  ├─ icon.ico
 │  │  └─ icon.png
 │  ├─ src
+│  │  ├─ commands.rs
 │  │  ├─ lib.rs
-│  │  └─ main.rs
+│  │  ├─ main.rs
+│  │  ├─ queue.rs
+│  │  ├─ types.rs
+│  │  └─ worker.rs
 │  └─ tauri.conf.json
 ├─ tsconfig.json
 ├─ tsconfig.node.json
@@ -95,4 +146,4 @@ HAWKNET
 └─ wordlist
    └─ subdomains-5000.txt
 
-```s
+```
