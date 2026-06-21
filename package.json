@@ -17,7 +17,8 @@
     "litegraph.js": "^0.7.18",
     "lucide-react": "^1.21.0",
     "react": "^19.1.0",
-    "react-dom": "^19.1.0"
+    "react-dom": "^19.1.0",
+    "zustand": "^5.0.14"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.1",
