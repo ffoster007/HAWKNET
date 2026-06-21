@@ -1,9 +1,7 @@
-// src/components/workbox/nodes.tsx
+// src/components/workspace/nodes.tsx
 import { memo } from "react";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 import { Shield, Globe, Server, GitBranch, Crosshair } from "lucide-react";
-
-// ✅ ใช้ type จาก tauriApi โดยตรง
 import type { NodeData } from "../../lib/tauriApi";
 
 // ── Severity colour map ───────────────────────────────────────────────────────
@@ -62,7 +60,6 @@ function NodeCard({
 // ── Target node (root) ────────────────────────────────────────────────────────
 
 export const TargetNode = memo(({ data }: NodeProps) => {
-  // ✅ แปลงจาก Record<string, unknown> → NodeData
   const d = data as unknown as NodeData;
   return (
     <NodeCard ring="ring-[#e8ff6b] bg-[#e8ff6b]/5" targetHandle={false}>
@@ -104,7 +101,6 @@ export const VulnNode = memo(({ data }: NodeProps) => {
         </div>
       </div>
 
-      {/* Scores row */}
       <div className="mt-2 flex flex-wrap gap-1">
         {sev && (
           <span className={`text-[9px] px-1.5 py-0.5 rounded font-semibold ${badge}`}>
