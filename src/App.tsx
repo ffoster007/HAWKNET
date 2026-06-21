@@ -1,4 +1,5 @@
-import { useState } from "react";
+// src/App.tsx
+import { useState, useEffect } from "react";
 import Activitybar, { type ActivityId } from "./components/activitybar/page";
 import Workspace from "./components/workspace/page";
 import Analyzer from "./components/analyzer/page";
@@ -6,18 +7,48 @@ import Terminal from "./components/ui/terminal/terminal";
 import Sidebar from "./components/ui/sidebar/sidebar";
 import Connections from "./components/connection/page";
 import { useSidebar } from "./hooks/useSidebar";
-import { useConnections, useConnectionsListener } from "./hooks/useConnections";
+import { useConnections } from "./hooks/useConnections";
 import { useResizable, useTerminalResizable } from "./hooks/useResizable";
+import SettingsPanel from "./components/interfaces/Settings/page";
 import "./App.css";
 
 function App() {
   const [activeView, setActiveView] = useState<ActivityId>("recon");
   const [isTerminalOpen, setIsTerminalOpen] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const { isOpen: isSidebarOpen, toggle: toggleSidebar } = useSidebar();
-  const { isOpen: isConnectionsOpen, close: closeConnections } = useConnections();
+  const { isOpen: isConnectionsOpen, close: closeConnections, open: openConnections } = useConnections();
   
   // Listen for connections toggle from ActivityBar
-  useConnectionsListener();
+  useEffect(() => {
+    const handleToggleConnections = () => {
+      // ใช้ open() หรือ toggle() ก็ได้
+      // ถ้าใช้ open() จะเปิดอย่างเดียว ไม่ปิด
+      // openConnections();
+      
+      // หรือใช้ toggle() ก็ได้
+      // แต่ถ้าใช้ toggle() ต้อง import toggle จาก useConnections
+    };
+    
+    window.addEventListener('toggleConnections', handleToggleConnections);
+    
+    return () => {
+      window.removeEventListener('toggleConnections', handleToggleConnections);
+    };
+  }, [openConnections]);
+  
+  // Listen for settings toggle event
+  useEffect(() => {
+    const handleToggleSettings = () => {
+      setShowSettings(prev => !prev);
+    };
+    
+    window.addEventListener('toggleSettings', handleToggleSettings);
+    
+    return () => {
+      window.removeEventListener('toggleSettings', handleToggleSettings);
+    };
+  }, []);
   
   const {
     width: sidebarWidth,
@@ -44,10 +75,15 @@ function App() {
       toggleSidebar();
     } else {
       setActiveView(id);
+      setShowSettings(false);
     }
   };
 
   const renderMainContent = () => {
+    if (showSettings) {
+      return <SettingsPanel />;
+    }
+
     switch (activeView) {
       case "recon":
         return <Workspace />;
@@ -130,7 +166,6 @@ function App() {
         <div 
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
           onClick={(e) => {
-            // Close when clicking backdrop
             if (e.target === e.currentTarget) {
               closeConnections();
             }

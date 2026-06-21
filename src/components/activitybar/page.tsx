@@ -1,3 +1,4 @@
+// src/components/activitybar/page.tsx
 import { useState } from "react";
 import {
   Layers,
@@ -61,11 +62,14 @@ export default function ActivityBar({
 
   function handleBottomAction(id: BottomActionId) {
     if (id === "connections") {
-      // Trigger connections modal
+      // ✅ ส่ง event ไปให้ useConnectionsListener จัดการ
       const event = new CustomEvent('toggleConnections');
       window.dispatchEvent(event);
+    } else if (id === "settings") {
+      // ✅ ส่ง event ไปให้ App.tsx จัดการ
+      const event = new CustomEvent('toggleSettings');
+      window.dispatchEvent(event);
     }
-    // TODO: open settings panel for "settings"
   }
 
   function isItemActive(id: ActivityId): boolean {

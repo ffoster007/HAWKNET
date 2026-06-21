@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+// src/hooks/useConnections.ts
+import { useState, useEffect, useCallback } from 'react';
 
 export interface LLMProvider {
   id: string;
@@ -10,7 +11,8 @@ export interface LLMProvider {
   enabled: boolean;
 }
 
-// Global state
+// ── Global State ──────────────────────────────────────────────────────────────
+// เก็บ state ไว้ global เพื่อให้ทุก component แชร์กันได้
 let globalState = {
   isOpen: false,
   providers: [
@@ -65,40 +67,48 @@ let globalState = {
 type Listener = () => void;
 const listeners: Set<Listener> = new Set();
 
-function notify() {
+function notifyListeners() {
   listeners.forEach(listener => listener());
 }
+
+// ── Hook ──────────────────────────────────────────────────────────────────────
 
 export function useConnections() {
   const [state, setState] = useState(globalState);
 
+  // Subscribe to global state changes
   useEffect(() => {
-    const listener = () => setState({ ...globalState });
+    const listener = () => {
+      setState({ ...globalState });
+    };
     listeners.add(listener);
+    
     return () => {
       listeners.delete(listener);
     };
   }, []);
 
-  const toggle = () => {
+  // ── Actions ──────────────────────────────────────────────────────────────
+
+  const toggle = useCallback(() => {
     globalState = { ...globalState, isOpen: !globalState.isOpen };
     setState({ ...globalState });
-    notify();
-  };
+    notifyListeners();
+  }, []);
 
-  const open = () => {
+  const open = useCallback(() => {
     globalState = { ...globalState, isOpen: true };
     setState({ ...globalState });
-    notify();
-  };
+    notifyListeners();
+  }, []);
 
-  const close = () => {
+  const close = useCallback(() => {
     globalState = { ...globalState, isOpen: false };
     setState({ ...globalState });
-    notify();
-  };
+    notifyListeners();
+  }, []);
 
-  const updateProvider = (id: string, updates: Partial<LLMProvider>) => {
+  const updateProvider = useCallback((id: string, updates: Partial<LLMProvider>) => {
     globalState = {
       ...globalState,
       providers: globalState.providers.map((p) =>
@@ -106,10 +116,10 @@ export function useConnections() {
       ),
     };
     setState({ ...globalState });
-    notify();
-  };
+    notifyListeners();
+  }, []);
 
-  const toggleProvider = (id: string) => {
+  const toggleProvider = useCallback((id: string) => {
     globalState = {
       ...globalState,
       providers: globalState.providers.map((p) =>
@@ -117,26 +127,26 @@ export function useConnections() {
       ),
     };
     setState({ ...globalState });
-    notify();
-  };
+    notifyListeners();
+  }, []);
 
-  const addProvider = (provider: LLMProvider) => {
+  const addProvider = useCallback((provider: LLMProvider) => {
     globalState = {
       ...globalState,
       providers: [...globalState.providers, provider],
     };
     setState({ ...globalState });
-    notify();
-  };
+    notifyListeners();
+  }, []);
 
-  const removeProvider = (id: string) => {
+  const removeProvider = useCallback((id: string) => {
     globalState = {
       ...globalState,
       providers: globalState.providers.filter((p) => p.id !== id),
     };
     setState({ ...globalState });
-    notify();
-  };
+    notifyListeners();
+  }, []);
 
   return {
     isOpen: state.isOpen,
@@ -151,13 +161,20 @@ export function useConnections() {
   };
 }
 
-// Hook เพื่อ listen event จาก ActivityBar
+// ── Listener Hook (ใช้ใน ActivityBar) ──────────────────────────────────────
+
 export function useConnectionsListener() {
   const { toggle } = useConnections();
   
   useEffect(() => {
-    const handler = () => toggle();
+    const handler = () => {
+      toggle();
+    };
+    
     window.addEventListener('toggleConnections', handler);
-    return () => window.removeEventListener('toggleConnections', handler);
+    
+    return () => {
+      window.removeEventListener('toggleConnections', handler);
+    };
   }, [toggle]);
 }

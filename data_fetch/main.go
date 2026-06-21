@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 	"time"
 
@@ -17,7 +18,39 @@ import (
 )
 
 func main() {
-	cfg, err := config.Load("./src-tauri/.env", "./hawknet_runtime.json")
+	// ✅ หา runtime config path ให้ตรงกับที่ Rust ใช้
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		log.Printf("warning: cannot find home dir: %v", err)
+		homeDir = "."
+	}
+
+	// ใช้ path เดียวกับ Rust ใน lib.rs
+	// Linux: ~/.config/hawknet/hawknet_runtime.json
+	// macOS: ~/Library/Application Support/hawknet/hawknet_runtime.json
+	// Windows: %APPDATA%\hawknet\hawknet_runtime.json
+	configDir := filepath.Join(homeDir, ".config", "hawknet")
+	runtimePath := filepath.Join(configDir, "hawknet_runtime.json")
+
+	// ✅ สร้าง directory ถ้ายังไม่มี
+	if err := os.MkdirAll(configDir, 0755); err != nil {
+		log.Printf("warning: cannot create config dir: %v", err)
+	}
+
+	// ✅ ถ้าไม่มีไฟล์ runtime ให้สร้าง default
+	if _, err := os.Stat(runtimePath); os.IsNotExist(err) {
+		defaultConfig := config.RuntimeFlags{
+			AIEnabled:     false,
+			ShodanEnabled: false,
+			PassiveOnly:   false,
+		}
+		data, _ := json.MarshalIndent(defaultConfig, "", "  ")
+		if err := os.WriteFile(runtimePath, data, 0644); err != nil {
+			log.Printf("warning: cannot create default runtime config: %v", err)
+		}
+	}
+
+	cfg, err := config.Load("./src-tauri/.env", runtimePath)
 	if err != nil {
 		log.Fatalf("config: %v", err)
 	}
@@ -64,8 +97,14 @@ func main() {
 			http.Error(w, "bad json", http.StatusBadRequest)
 			return
 		}
+
+		// ✅ เขียนไปที่ runtimePath ที่กำหนดไว้
 		data, _ := json.MarshalIndent(flags, "", "  ")
-		if err := os.WriteFile("./hawknet_runtime.json", data, 0644); err != nil {
+		if err := os.MkdirAll(configDir, 0755); err != nil {
+			http.Error(w, "mkdir failed: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		if err := os.WriteFile(runtimePath, data, 0644); err != nil {
 			http.Error(w, "write failed: "+err.Error(), http.StatusInternalServerError)
 			return
 		}

@@ -1,309 +1,328 @@
-import { useState } from "react";
-import { Search, Globe, Server, X } from "lucide-react";
+// src/components/workspace/page.tsx
+import { useState, useCallback, useEffect, useRef } from "react";
+import {
+  ReactFlow,
+  Background,
+  Controls,
+  MiniMap,
+  useNodesState,
+  useEdgesState,
+  BackgroundVariant,
+  type Node,
+  type Edge,
+} from "@xyflow/react";
+import "@xyflow/react/dist/style.css";
+
+import { Search, Globe, Server, X, Loader2, AlertTriangle } from "lucide-react";
 import Warning from "../popup/warning";
+import SummaryBar from "./SummaryBar";
+import { nodeTypes } from "./nodes";
+import {
+  submitScan,
+  getJob,
+  type Job,
+  type TargetType,
+  type VulnGraph,
+  type GraphNode,
+  type GraphEdge,
+} from "../../lib/tauriApi";
 
-/**
- * HAWKNET — Workspace
- * Domain/IP input interface for reconnaissance
- */
+// ── Polling interval (ms) ─────────────────────────────────────────────────────
+const POLL_MS = 1500;
 
-type TargetType = "domain" | "ip";
-
-interface TargetHistory {
-  id: string;
-  target: string;
-  type: TargetType;
-  timestamp: Date;
+// ── Convert VulnGraph → React Flow nodes/edges ────────────────────────────────
+function toFlowElements(g: VulnGraph): { nodes: Node[]; edges: Edge[] } {
+  // ✅ แปลง GraphNode → React Flow Node
+  const nodes: Node[] = g.nodes.map((n: GraphNode) => ({
+    id: n.id,
+    type: n.type,
+    position: n.position,
+    // ✅ ใช้ type assertion เพื่อแปลง NodeData → Record<string, unknown>
+    data: n.data as unknown as Record<string, unknown>,
+  }));
+  
+  const edges: Edge[] = g.edges.map((e: GraphEdge) => ({
+    id: e.id,
+    source: e.source,
+    target: e.target,
+    label: e.label || undefined,
+    type: e.type || "smoothstep",
+    animated: e.animated,
+    style: { stroke: "#2a3029", strokeWidth: 1.5 },
+    labelStyle: { fontSize: 10, fill: "#6b7268" },
+    labelBgStyle: { fill: "#0b0e0c" },
+  }));
+  
+  return { nodes, edges };
 }
 
 export default function Workspace() {
+  // ── Scan form state ──────────────────────────────────────────────────────
   const [target, setTarget] = useState("");
   const [targetType, setTargetType] = useState<TargetType>("domain");
-  const [history, setHistory] = useState<TargetHistory[]>([]);
   const [error, setError] = useState("");
-  
-  // Warning popup state
   const [showWarning, setShowWarning] = useState(false);
-  const [pendingTarget, setPendingTarget] = useState<{
-    target: string;
-    type: TargetType;
-  } | null>(null);
 
-  // Simple validation
-  const validateTarget = (value: string, type: TargetType): boolean => {
-    if (!value.trim()) return false;
+  // ── Job polling state ────────────────────────────────────────────────────
+  const [activeJob, setActiveJob] = useState<Job | null>(null);
+  const [scanning, setScanning] = useState(false);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-    if (type === "ip") {
-      // IPv4 validation
-      const ipv4Regex = /^(\d{1,3}\.){3}\d{1,3}$/;
-      if (ipv4Regex.test(value)) {
-        const parts = value.split(".");
-        return parts.every((part) => {
-          const num = parseInt(part, 10);
-          return num >= 0 && num <= 255;
-        });
+  // ── React Flow state ─────────────────────────────────────────────────────
+  // ✅ ใช้ generics ให้ถูกต้อง: useNodesState<Node[]>() 
+  // แต่จริงๆแล้ว useNodesState รับ generic เป็นประเภทของ Node
+  // และคืนค่า [Node[], (nodes: Node[]) => void]
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
+
+  // ── Poll active job ──────────────────────────────────────────────────────
+  const startPolling = useCallback((jobId: string) => {
+    if (pollRef.current) clearInterval(pollRef.current);
+
+    pollRef.current = setInterval(async () => {
+      try {
+        const job = await getJob(jobId);
+        if (!job) return;
+        setActiveJob(job);
+
+        if (job.status === "done" && job.graph) {
+          setScanning(false);
+          clearInterval(pollRef.current!);
+          const { nodes: n, edges: e } = toFlowElements(job.graph);
+          // ✅ setNodes รับ Node[] โดยตรง
+          setNodes(n);
+          setEdges(e);
+        } else if (job.status === "failed") {
+          setScanning(false);
+          clearInterval(pollRef.current!);
+        }
+      } catch (err) {
+        console.error("Poll error:", err);
+        setScanning(false);
+        clearInterval(pollRef.current!);
       }
-      return false;
+    }, POLL_MS);
+  }, [setNodes, setEdges]);
+
+  useEffect(() => {
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+    };
+  }, []);
+
+  // ── Form submit ──────────────────────────────────────────────────────────
+  const validate = (v: string, t: TargetType) => {
+    if (!v.trim()) return "Target cannot be empty";
+    if (t === "ip") {
+      const ipv4 = /^(\d{1,3}\.){3}\d{1,3}$/;
+      if (!ipv4.test(v) || v.split(".").some((p) => parseInt(p) > 255))
+        return "Enter a valid IPv4 address";
     } else {
-      // Domain validation (basic)
-      const domainRegex = /^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/;
-      return domainRegex.test(value);
+      if (!/^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/.test(v))
+        return "Enter a valid domain (e.g. example.com)";
     }
+    return "";
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
-
-    if (!validateTarget(target, targetType)) {
-      setError(
-        targetType === "ip"
-          ? "Please enter a valid IPv4 address (e.g., 192.168.1.1)"
-          : "Please enter a valid domain (e.g., example.com)"
-      );
-      return;
+    const err = validate(target, targetType);
+    if (err) { 
+      setError(err); 
+      return; 
     }
-
-    // Show warning popup instead of directly scanning
-    setPendingTarget({
-      target: target.trim(),
-      type: targetType,
-    });
+    setError("");
     setShowWarning(true);
   };
 
-  const handleConfirmScan = () => {
-    if (!pendingTarget) return;
-
-    // Add to history
-    const newEntry: TargetHistory = {
-      id: Date.now().toString(),
-      target: pendingTarget.target,
-      type: pendingTarget.type,
-      timestamp: new Date(),
-    };
-
-    setHistory((prev) => [newEntry, ...prev.slice(0, 9)]); // Keep last 10
-    setTarget("");
+  const handleConfirm = async () => {
     setShowWarning(false);
-    setPendingTarget(null);
+    setScanning(true);
+    setActiveJob(null);
+    // ✅ clear nodes และ edges
+    setNodes([]);
+    setEdges([]);
 
-    // TODO: Trigger actual reconnaissance
-    console.log("Starting recon for:", pendingTarget.target);
+    try {
+      const jobId = await submitScan(target.trim(), targetType);
+      startPolling(jobId);
+    } catch (err) {
+      console.error("Submit error:", err);
+      setScanning(false);
+      setError(String(err));
+    }
   };
 
-  const handleCancelScan = () => {
-    setShowWarning(false);
-    setPendingTarget(null);
-  };
-
-  const removeFromHistory = (id: string) => {
-    setHistory((prev) => prev.filter((item) => item.id !== id));
-  };
-
-  const selectFromHistory = (item: TargetHistory) => {
-    setTarget(item.target);
-    setTargetType(item.type);
-  };
+  // ── Render ───────────────────────────────────────────────────────────────
+  const hasGraph = nodes.length > 0;
+  const summary = activeJob?.graph?.summary;
 
   return (
     <>
       <div className="flex h-full w-full flex-col bg-[#0b0e0c]">
-        {/* Header */}
-        <div className="border-b border-[#1c211d] px-8 py-6">
-          <div className="flex items-center gap-3 mb-2">
-            <Globe className="h-6 w-6 text-[#e8ff6b]" />
-            <h1 className="text-2xl font-semibold text-[#cfd6c8]">
-              Exclusive Reconnaissance
-            </h1>
-          </div>
-          <p className="text-sm text-[#6b7268] ml-9">
-            Enter a domain or IP address to start scanning
-          </p>
+
+        {/* ── Input bar ──────────────────────────────────────────────────── */}
+        <div className="border-b border-[#1c211d] px-6 py-4">
+          <form onSubmit={handleSubmit} className="flex items-center gap-3">
+            {/* Type toggle */}
+            <div className="flex gap-1 shrink-0">
+              {(["domain", "ip"] as TargetType[]).map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => { setTargetType(t); setError(""); }}
+                  className={`flex items-center gap-1.5 rounded px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer ${
+                    targetType === t
+                      ? "bg-[#e8ff6b] text-[#0b0e0c]"
+                      : "bg-[#1c211d] text-[#6b7268] hover:text-[#cfd6c8]"
+                  }`}
+                >
+                  {t === "domain" ? <Globe size={13} /> : <Server size={13} />}
+                  {t === "domain" ? "Domain" : "IP"}
+                </button>
+              ))}
+            </div>
+
+            {/* Input */}
+            <div className="relative flex-1">
+              <Search
+                size={15}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4a5148]"
+              />
+              <input
+                type="text"
+                value={target}
+                onChange={(e) => { setTarget(e.target.value); setError(""); }}
+                placeholder={targetType === "domain" ? "e.g. example.com" : "e.g. 93.184.216.34"}
+                disabled={scanning}
+                className="w-full rounded-md border border-[#1c211d] bg-[#11150f] pl-9 pr-4 py-2 text-sm text-[#cfd6c8] placeholder:text-[#4a5148] outline-none focus:border-[#e8ff6b] transition-colors disabled:opacity-50"
+                spellCheck={false}
+                autoComplete="off"
+              />
+            </div>
+
+            {/* Submit */}
+            <button
+              type="submit"
+              disabled={scanning}
+              className="shrink-0 flex items-center gap-2 rounded-md bg-[#e8ff6b] px-5 py-2 text-sm font-semibold text-[#0b0e0c] hover:bg-[#d4f04a] disabled:opacity-50 transition-colors cursor-pointer"
+            >
+              {scanning && <Loader2 size={14} className="animate-spin" />}
+              {scanning ? "Scanning…" : "Scan"}
+            </button>
+          </form>
+
+          {/* Error */}
+          {error && (
+            <div className="mt-2 flex items-center gap-2 text-xs text-red-400">
+              <X size={13} /> {error}
+            </div>
+          )}
+
+          {/* Active job status */}
+          {activeJob && activeJob.status !== "done" && (
+            <div className="mt-2 flex items-center gap-2 text-xs text-[#6b7268]">
+              {activeJob.status === "running" && (
+                <Loader2 size={11} className="animate-spin text-[#e8ff6b]" />
+              )}
+              <span className="capitalize">{activeJob.status}</span>
+              <span className="text-[#2a3029]">·</span>
+              <span className="font-mono text-[10px]">{activeJob.id.slice(0, 8)}</span>
+            </div>
+          )}
+
+          {/* Failed job errors */}
+          {activeJob?.status === "failed" && activeJob.errors.length > 0 && (
+            <div className="mt-2 flex items-start gap-2 text-xs text-red-400">
+              <AlertTriangle size={12} className="shrink-0 mt-0.5" />
+              <span>{activeJob.errors[0]}</span>
+            </div>
+          )}
         </div>
 
-        <div className="flex-1 overflow-auto p-8">
-          <div className="mx-auto max-w-3xl">
-            {/* Input Form */}
-            <form onSubmit={handleSubmit} className="mb-8">
-              <div className="rounded-lg border border-[#1c211d] bg-[#11150f] p-6">
-                {/* Target Type Toggle */}
-                <div className="mb-4 flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setTargetType("domain");
-                      setError("");
-                    }}
-                    className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors cursor-pointer ${
-                      targetType === "domain"
-                        ? "bg-[#e8ff6b] text-[#0b0e0c]"
-                        : "bg-[#1c211d] text-[#6b7268] hover:text-[#cfd6c8]"
-                    }`}
-                  >
-                    <Globe size={16} />
-                    Domain
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setTargetType("ip");
-                      setError("");
-                    }}
-                    className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors cursor-pointer ${
-                      targetType === "ip"
-                        ? "bg-[#e8ff6b] text-[#0b0e0c]"
-                        : "bg-[#1c211d] text-[#6b7268] hover:text-[#cfd6c8]"
-                    }`}
-                  >
-                    <Server size={16} />
-                    IP Address
-                  </button>
-                </div>
+        {/* ── Summary bar (only when graph is ready) ────────────────────── */}
+        {hasGraph && summary && activeJob?.graph && (
+          <SummaryBar
+            summary={summary}
+            aiEnhanced={activeJob.graph.ai_enhanced}
+            target={activeJob.target.value}
+          />
+        )}
 
-                {/* Input Field */}
-                <div className="flex gap-3">
-                  <div className="relative flex-1">
-                    <input
-                      type="text"
-                      value={target}
-                      onChange={(e) => {
-                        setTarget(e.target.value);
-                        setError("");
-                      }}
-                      placeholder={
-                        targetType === "domain"
-                          ? "e.g., example.com"
-                          : "e.g., 192.168.1.1"
-                      }
-                      className="w-full rounded-md border border-[#1c211d] bg-[#0b0e0c] px-4 py-3 pl-10 text-[#cfd6c8] placeholder:text-[#6b7268] outline-none focus:border-[#e8ff6b] focus:ring-1 focus:ring-[#e8ff6b] transition-colors"
-                      autoFocus
-                      spellCheck={false}
-                      autoComplete="off"
-                    />
-                    <Search
-                      className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6b7268]"
-                      size={18}
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    className="rounded-md bg-[#e8ff6b] px-6 py-3 text-sm font-semibold text-[#0b0e0c] transition-colors hover:bg-[#d4f04a] active:scale-95 cursor-pointer"
-                  >
-                    Start Scan
-                  </button>
-                </div>
-
-                {/* Error Message */}
-                {error && (
-                  <div className="mt-3 flex items-center gap-2 rounded-md border border-red-500/20 bg-red-500/10 px-4 py-2">
-                    <X size={16} className="text-red-400 flex-shrink-0" />
-                    <p className="text-sm text-red-400">{error}</p>
-                  </div>
-                )}
-
-                {/* Target Info */}
-                {target.trim() && !error && (
-                  <div className="mt-3 rounded-md border border-[#1c211d] bg-[#0b0e0c] px-4 py-2">
-                    <div className="flex items-center gap-2 text-sm text-[#9ba39a]">
-                      {targetType === "domain" ? (
-                        <Globe size={14} className="text-[#6b7268]" />
-                      ) : (
-                        <Server size={14} className="text-[#6b7268]" />
-                      )}
-                      <span>Target:</span>
-                      <span className="font-mono text-[#e8ff6b]">
-                        {target.trim()}
-                      </span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </form>
-
-            {/* Recent Targets History */}
-            {history.length > 0 && (
-              <div className="rounded-lg border border-[#1c211d] bg-[#11150f] p-6">
-                <div className="mb-4 flex items-center justify-between">
-                  <h2 className="text-sm font-semibold uppercase tracking-wider text-[#6b7268]">
-                    Recent Targets
-                  </h2>
-                  <button
-                    onClick={() => setHistory([])}
-                    className="text-xs text-[#6b7268] hover:text-[#cfd6c8] transition-colors cursor-pointer"
-                  >
-                    Clear All
-                  </button>
-                </div>
-                <div className="space-y-2">
-                  {history.map((item) => (
-                    <div
-                      key={item.id}
-                      onClick={() => selectFromHistory(item)}
-                      className="group flex items-center justify-between rounded-md border border-[#1c211d] bg-[#0b0e0c] px-4 py-3 cursor-pointer hover:border-[#2a3029] transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        {item.type === "domain" ? (
-                          <Globe
-                            size={16}
-                            className="text-[#6b7268] group-hover:text-[#e8ff6b] transition-colors"
-                          />
-                        ) : (
-                          <Server
-                            size={16}
-                            className="text-[#6b7268] group-hover:text-[#e8ff6b] transition-colors"
-                          />
-                        )}
-                        <span className="font-mono text-sm text-[#cfd6c8] group-hover:text-[#e8ff6b] transition-colors">
-                          {item.target}
-                        </span>
-                        <span className="rounded bg-[#1c211d] px-2 py-0.5 text-xs text-[#6b7268]">
-                          {item.type === "domain" ? "Domain" : "IP"}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className="text-xs text-[#6b7268]">
-                          {item.timestamp.toLocaleTimeString()}
-                        </span>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            removeFromHistory(item.id);
-                          }}
-                          className="rounded p-1 text-[#6b7268] opacity-0 hover:bg-[#1c211d] hover:text-red-400 group-hover:opacity-100 transition-all cursor-pointer"
-                        >
-                          <X size={14} />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Empty State */}
-            {history.length === 0 && (
-              <div className="rounded-lg border border-dashed border-[#1c211d] p-12 text-center">
-                <Search className="mx-auto mb-4 h-12 w-12 text-[#1c211d]" />
-                <h3 className="mb-2 text-lg font-medium text-[#6b7268]">
-                  No recent targets
-                </h3>
-                <p className="text-sm text-[#4a5148]">
-                  Your scan history will appear here
-                </p>
-              </div>
-            )}
-          </div>
+        {/* ── React Flow canvas ─────────────────────────────────────────── */}
+        <div className="flex-1 min-h-0">
+          {!hasGraph && !scanning ? (
+            /* Empty state */
+            <div className="flex h-full flex-col items-center justify-center gap-3">
+              <Search className="h-14 w-14 text-[#1c211d]" />
+              <p className="text-sm text-[#4a5148]">
+                Enter a target above to start scanning
+              </p>
+            </div>
+          ) : scanning && nodes.length === 0 ? (
+            /* Loading state */
+            <div className="flex h-full flex-col items-center justify-center gap-3">
+              <Loader2 className="h-10 w-10 text-[#e8ff6b] animate-spin" />
+              <p className="text-sm text-[#6b7268]">Scanning {target}…</p>
+              <p className="text-xs text-[#4a5148]">
+                DNS · Ports · Fingerprint · CVE lookup
+              </p>
+            </div>
+          ) : (
+            <ReactFlow
+              nodes={nodes}
+              edges={edges}
+              onNodesChange={onNodesChange}
+              onEdgesChange={onEdgesChange}
+              nodeTypes={nodeTypes}
+              fitView
+              fitViewOptions={{ padding: 0.15 }}
+              minZoom={0.15}
+              maxZoom={2}
+              proOptions={{ hideAttribution: true }}
+              style={{ background: "#0b0e0c" }}
+            >
+              <Background
+                variant={BackgroundVariant.Dots}
+                color="#1c211d"
+                gap={20}
+                size={1}
+              />
+              <Controls
+                style={{
+                  background: "#11150f",
+                  border: "1px solid #1c211d",
+                  borderRadius: 8,
+                }}
+              />
+              <MiniMap
+                style={{
+                  background: "#11150f",
+                  border: "1px solid #1c211d",
+                }}
+                nodeColor={(n) => {
+                  const sev = (n.data as any)?.severity ?? "";
+                  if (sev === "CRITICAL") return "#ef4444";
+                  if (sev === "HIGH")     return "#fb923c";
+                  if (sev === "MEDIUM")   return "#facc15";
+                  if (sev === "LOW")      return "#60a5fa";
+                  if (n.type === "target") return "#e8ff6b";
+                  return "#2a3029";
+                }}
+                maskColor="rgba(0,0,0,0.5)"
+              />
+            </ReactFlow>
+          )}
         </div>
       </div>
 
-      {/* Warning Popup */}
-      {showWarning && pendingTarget && (
+      {/* Warning popup */}
+      {showWarning && (
         <Warning
-          target={pendingTarget.target}
-          targetType={pendingTarget.type}
-          onConfirm={handleConfirmScan}
-          onCancel={handleCancelScan}
+          target={target.trim()}
+          targetType={targetType}
+          onConfirm={handleConfirm}
+          onCancel={() => setShowWarning(false)}
         />
       )}
     </>
