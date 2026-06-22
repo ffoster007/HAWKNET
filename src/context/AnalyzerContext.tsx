@@ -1,6 +1,5 @@
-// src/context/AnalyzerContext.tsx
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import type { Job, VulnGraph, GraphNode, GraphEdge, NodeData } from '../lib/tauriApi';
+import type { Job, VulnGraph, GraphNode, GraphEdge } from '../lib/tauriApi';
 
 export interface AnalyzerNode {
   id: string;

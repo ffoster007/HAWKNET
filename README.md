@@ -39,3 +39,18 @@ pnpm install
 # 2. Start the development server
 pnpm tauri dev
 ```
+
+## Before Reconnaissance Scan
+
+```
+cd data_fetch
+
+go run main.go
+```
+
+## Features
+- Reconnaissance Scan
+- Display Bounty
+- Graph Analysis
+- AI Model Integration
+- Threat simulation 

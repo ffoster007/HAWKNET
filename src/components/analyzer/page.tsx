@@ -1,4 +1,3 @@
-// src/components/analyzer/page.tsx
 import { useState, useEffect, useCallback } from "react";
 import {
   ReactFlow,
@@ -28,14 +27,12 @@ export default function Analyzer() {
   // ── React Flow state ─────────────────────────────────────────────────────
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
-  const [isReady, setIsReady] = useState(false);
 
   // ── แปลงข้อมูลจาก Analyzer Context → React Flow ──────────────────────
   useEffect(() => {
     if (analyzerNodes.length === 0 && analyzerEdges.length === 0) {
       setNodes([]);
       setEdges([]);
-      setIsReady(false);
       return;
     }
 
@@ -60,7 +57,6 @@ export default function Analyzer() {
 
     setNodes(flowNodes);
     setEdges(flowEdges);
-    setIsReady(true);
   }, [analyzerNodes, analyzerEdges, setNodes, setEdges]);
 
   // ── Zoom controls ──────────────────────────────────────────────────────
