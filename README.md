@@ -47,3 +47,10 @@ cd data_fetch
 
 go run main.go
 ```
+
+## Features
+- Reconnaissance Scan
+- Display Bounty
+- Graph Analysis
+- AI Model Integration
+- Threat simulation 
