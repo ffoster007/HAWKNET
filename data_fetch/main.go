@@ -18,26 +18,20 @@ import (
 )
 
 func main() {
-	// ✅ หา runtime config path ให้ตรงกับที่ Rust ใช้
+	// ── Runtime config path (เหมือนเดิม) ──────────────────────────────────
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		log.Printf("warning: cannot find home dir: %v", err)
 		homeDir = "."
 	}
 
-	// ใช้ path เดียวกับ Rust ใน lib.rs
-	// Linux: ~/.config/hawknet/hawknet_runtime.json
-	// macOS: ~/Library/Application Support/hawknet/hawknet_runtime.json
-	// Windows: %APPDATA%\hawknet\hawknet_runtime.json
 	configDir := filepath.Join(homeDir, ".config", "hawknet")
 	runtimePath := filepath.Join(configDir, "hawknet_runtime.json")
 
-	// ✅ สร้าง directory ถ้ายังไม่มี
 	if err := os.MkdirAll(configDir, 0755); err != nil {
 		log.Printf("warning: cannot create config dir: %v", err)
 	}
 
-	// ✅ ถ้าไม่มีไฟล์ runtime ให้สร้าง default
 	if _, err := os.Stat(runtimePath); os.IsNotExist(err) {
 		defaultConfig := config.RuntimeFlags{
 			AIEnabled:     false,
@@ -50,7 +44,16 @@ func main() {
 		}
 	}
 
-	cfg, err := config.Load("./src-tauri/.env", runtimePath)
+	// ── .env path resolution ───────────────────────────────────────────────
+	// ลำดับการค้นหา .env:
+	// 1. HAWKNET_ENV_PATH (env var — override สำหรับ dev)
+	// 2. ~/.config/hawknet/.env (production / sidecar path)
+	// 3. ./src-tauri/.env (dev fallback เมื่อรัน go run โดยตรง)
+	// 4. ./.env (fallback สุดท้าย)
+	envPath := resolveEnvPath(homeDir)
+	log.Printf("[hawknet-fetch] using .env: %s", envPath)
+
+	cfg, err := config.Load(envPath, runtimePath)
 	if err != nil {
 		log.Fatalf("config: %v", err)
 	}
@@ -60,7 +63,7 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	// POST /scan → run full pipeline, return ScanResult + VulnGraph
+	// POST /scan
 	mux.HandleFunc("POST /scan", func(w http.ResponseWriter, r *http.Request) {
 		var target types.ScanTarget
 		if err := json.NewDecoder(r.Body).Decode(&target); err != nil {
@@ -90,7 +93,7 @@ func main() {
 		})
 	})
 
-	// POST /config/runtime — Tauri UI writes AI toggle here
+	// POST /config/runtime
 	mux.HandleFunc("POST /config/runtime", func(w http.ResponseWriter, r *http.Request) {
 		var flags config.RuntimeFlags
 		if err := json.NewDecoder(r.Body).Decode(&flags); err != nil {
@@ -98,7 +101,6 @@ func main() {
 			return
 		}
 
-		// ✅ เขียนไปที่ runtimePath ที่กำหนดไว้
 		data, _ := json.MarshalIndent(flags, "", "  ")
 		if err := os.MkdirAll(configDir, 0755); err != nil {
 			http.Error(w, "mkdir failed: "+err.Error(), http.StatusInternalServerError)
@@ -141,4 +143,26 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	_ = srv.Shutdown(ctx)
+}
+
+// resolveEnvPath หา .env ที่เหมาะสมตามลำดับ priority
+func resolveEnvPath(homeDir string) string {
+	// 1. HAWKNET_ENV_PATH override (สำหรับ dev/CI)
+	if v := os.Getenv("HAWKNET_ENV_PATH"); v != "" {
+		return v
+	}
+
+	// 2. ~/.config/hawknet/.env (production — Tauri จะ copy ไว้ที่นี่)
+	productionEnv := filepath.Join(homeDir, ".config", "hawknet", ".env")
+	if _, err := os.Stat(productionEnv); err == nil {
+		return productionEnv
+	}
+
+	// 3. ./src-tauri/.env (dev: go run main.go จาก root project)
+	if _, err := os.Stat("./src-tauri/.env"); err == nil {
+		return "./src-tauri/.env"
+	}
+
+	// 4. ./.env (fallback)
+	return "./.env"
 }
