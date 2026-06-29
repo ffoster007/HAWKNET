@@ -29,7 +29,7 @@ HAWKNET is a cutting-edge, open-source, cross-platform desktop application desig
 
 Copy environment
 ```
-cp ./src-tauri/.env.example ./src-tauri/.env
+cp .env.example .env ./src-tauri/.env.example ./src-tauri/.env
 ```
 
 ```
@@ -53,4 +53,4 @@ go run main.go
 - Display Bounty
 - Graph Analysis
 - AI Model Integration
-- Threat simulation 
+- Threat simulation (Threanet)
