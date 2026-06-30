@@ -16,10 +16,11 @@ type ScanTarget struct {
 }
 
 type PortResult struct {
-	Port     int    `json:"port"`
-	Protocol string `json:"protocol"`
-	State    string `json:"state"`
-	Banner   string `json:"banner,omitempty"`
+	Port     int           `json:"port"`
+	Protocol string        `json:"protocol"`
+	State    string        `json:"state"`
+	Banner   string        `json:"banner,omitempty"`
+	RTT      time.Duration `json:"rtt,omitempty"`
 }
 
 type SubdomainResult struct {
