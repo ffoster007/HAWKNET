@@ -4,14 +4,15 @@
   </a>
 </p>
 
-<div style="display: flex; gap: 8px; justify-content: center; align-items: center; flex-wrap: wrap;">
+<p align="center">
   <a href="https://avacx.com" target="_blank">
     <img src="https://img.shields.io/badge/Website-AVACX.COM-038F24?style=for-the-badge&logo=googlechrome&logoColor=white&labelColor=000000" alt="Website">
   </a>
+  &nbsp;
   <a href="https://discord.gg/QVnHXT5ve2" target="_blank">
     <img src="https://img.shields.io/badge/Discord-FFOSTER007-5865F2?style=for-the-badge&logo=discord&logoColor=white&labelColor=000000" alt="Discord">
   </a>
-</div>
+</p>
 
 <div align="left">
 
