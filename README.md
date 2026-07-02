@@ -4,6 +4,23 @@
   </a>
 </p>
 
+<div style="display: flex; gap: 8px; justify-content: center; align-items: center; flex-wrap: wrap;">
+  <a href="https://avacx.com" target="_blank">
+    <img src="https://img.shields.io/badge/Website-AVACX.COM-038F24?style=for-the-badge&logo=googlechrome&logoColor=white&labelColor=000000" alt="Website">
+  </a>
+  <a href="https://discord.gg/QVnHXT5ve2" target="_blank">
+    <img src="https://img.shields.io/badge/Discord-FFOSTER007-5865F2?style=for-the-badge&logo=discord&logoColor=white&labelColor=000000" alt="Discord">
+  </a>
+</div>
+
+<div align="left">
+
+| Others Language | README.md |
+|:---:|---|
+| **[ภาษาไทย](./i18n/TH-Thai/README-TH.md)** | อ่านเอกสารฉบับภาษาไทย |
+
+</div>
+
 ## Overview
 HAWKNET is a cutting-edge, open-source, cross-platform desktop application designed to provide users with a seamless experience in managing and interacting with various AI models. Built using Tauri and Rust, Hawknet offers a lightweight and efficient solution for developers and enthusiasts looking to harness the power of AI in their workflows.
 
@@ -38,14 +55,6 @@ pnpm install
 
 # 2. Start the development server
 pnpm tauri dev
-```
-
-## Before Reconnaissance Scan
-
-```
-cd data_fetch
-
-go run main.go
 ```
 
 ## Features
