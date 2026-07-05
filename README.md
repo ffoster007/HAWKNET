@@ -12,6 +12,10 @@
   <a href="https://discord.gg/QVnHXT5ve2" target="_blank">
     <img src="https://img.shields.io/badge/Discord-FFOSTER007-5865F2?style=for-the-badge&logo=discord&logoColor=white&labelColor=000000" alt="Discord">
   </a>
+  &nbsp;
+    <a href="https://www.instagram.com/avacxint" target="_blank">
+    <img src="https://img.shields.io/badge/Instagram-FFOSTER007-FF5C3D?style=for-the-badge&logo=instagram&logoColor=white&labelColor=000000" alt="Instagram">
+  </a>
 </p>
 
 <div align="left">
