@@ -18,6 +18,12 @@
   </a>
 </p>
 
+
+## Overview
+HAWKNET is a cutting-edge, open-source, cross-platform desktop application designed to provide users with a seamless experience in managing and interacting with various AI models. Built using Tauri and Rust, Hawknet offers a lightweight and efficient solution for developers and enthusiasts looking to harness the power of AI in their workflows.
+
+>LEGAL NOTICE: HAWKNET is intended for security research and penetration testing purposes only. Use it responsibly and ethically.We are not liable for any misuse or damage caused by the tool. Read full legal disclaimer in [LEGAL](/.guidebook/legal.md).
+
 <div align="left">
 
 | Others Language | README.md |
@@ -25,11 +31,6 @@
 | **[ภาษาไทย](./i18n/TH-Thai/README-TH.md)** | อ่านเอกสารฉบับภาษาไทย |
 
 </div>
-
-## Overview
-HAWKNET is a cutting-edge, open-source, cross-platform desktop application designed to provide users with a seamless experience in managing and interacting with various AI models. Built using Tauri and Rust, Hawknet offers a lightweight and efficient solution for developers and enthusiasts looking to harness the power of AI in their workflows.
-
->LEGAL NOTICE: HAWKNET is intended for security research and penetration testing purposes only. Use it responsibly and ethically.We are not liable for any misuse or damage caused by the tool. Read full legal disclaimer in [LEGAL](/.guidebook/legal.md).
 
 ## HAWKNET in Action
 
