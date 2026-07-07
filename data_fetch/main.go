@@ -36,7 +36,6 @@ func main() {
 		defaultConfig := config.RuntimeFlags{
 			AIEnabled:     false,
 			ShodanEnabled: false,
-			PassiveOnly:   false,
 		}
 		data, _ := json.MarshalIndent(defaultConfig, "", "  ")
 		if err := os.WriteFile(runtimePath, data, 0644); err != nil {
@@ -57,7 +56,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("config: %v", err)
 	}
-	log.Printf("[hawknet-fetch] ai=%v passive=%v", cfg.AIAvailable(), cfg.Runtime.PassiveOnly)
+	log.Printf("[hawknet-fetch] ai=%v passive=%v", cfg.AIAvailable(), cfg.Runtime)
 
 	pipe := scanner.NewPipeline(cfg)
 
@@ -89,7 +88,6 @@ func main() {
 		_ = json.NewEncoder(w).Encode(map[string]any{
 			"status":       "ok",
 			"ai_available": cfg.AIAvailable(),
-			"passive_only": cfg.Runtime.PassiveOnly,
 		})
 	})
 
@@ -111,7 +109,7 @@ func main() {
 			return
 		}
 		cfg.Runtime = flags
-		log.Printf("[config] ai=%v passive=%v", flags.AIEnabled, flags.PassiveOnly)
+		log.Printf("[config] ai=%v passive=%v", flags.AIEnabled, flags)
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(map[string]string{"status": "updated"})
 	})

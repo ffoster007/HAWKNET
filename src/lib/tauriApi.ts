@@ -110,7 +110,6 @@ export async function healthCheck(): Promise<boolean> {
  */
 export async function setRuntimeConfig(
   aiEnabled: boolean,
-  passiveOnly: boolean
 ): Promise<void> {
-  return await invoke("set_runtime_config", { aiEnabled, passiveOnly });
+  return await invoke("set_runtime_config", { aiEnabled });
 }

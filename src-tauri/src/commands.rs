@@ -61,7 +61,6 @@ pub async fn set_runtime_config(
 ) -> Result<(), String> {
     let payload = serde_json::json!({
         "ai_enabled": ai_enabled,
-        "passive_only": passive_only,
         "shodan_enabled": false,
     });
 

@@ -54,13 +54,13 @@ func (p *Pipeline) Run(ctx context.Context, target types.ScanTarget) types.ScanR
 	}
 
 	// ── 2. Subdomain enumeration ─────────────────────────────────────────
-	if target.Type == types.TargetDomain && !p.cfg.Runtime.PassiveOnly {
+	if target.Type == types.TargetDomain && !p.cfg.Runtime.AIEnabled {
 		result.Subdomains = p.enumSubdomains(ctx, target.Value)
 		log.Printf("[pipeline] subdomains: %d found", len(result.Subdomains))
 	}
 
 	// ── 3. Port scan ─────────────────────────────────────────────────────
-	if !p.cfg.Runtime.PassiveOnly {
+	if !p.cfg.Runtime.AIEnabled {
 		result.Ports = p.scanPorts(ctx, target.Value)
 		log.Printf("[pipeline] ports: %d open", len(result.Ports))
 	}

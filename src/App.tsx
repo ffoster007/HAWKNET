@@ -18,20 +18,22 @@ function AppContent() {
   const [isTerminalOpen, setIsTerminalOpen] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const { isOpen: isSidebarOpen, toggle: toggleSidebar } = useSidebar();
-  const { isOpen: isConnectionsOpen, close: closeConnections } = useConnections();
+
   
   // Listen for connections toggle from ActivityBar
+    const {
+    isOpen: isConnectionsOpen,
+    toggle,
+    close: closeConnections,
+    } = useConnections();
+
   useEffect(() => {
-    const handleToggleConnections = () => {
-      const event = new CustomEvent('toggleConnectionsModal');
-      window.dispatchEvent(event);
-    };
-    
-    window.addEventListener('toggleConnections', handleToggleConnections);
-    return () => {
-      window.removeEventListener('toggleConnections', handleToggleConnections);
-    };
-  }, []);
+        window.addEventListener("toggleConnections", toggle);
+
+        return () => {
+            window.removeEventListener("toggleConnections", toggle);
+        };
+    }, [toggle]);
   
   // Listen for settings toggle event
   useEffect(() => {

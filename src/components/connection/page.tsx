@@ -300,7 +300,7 @@ export default function Connections() {
                   onClick={() => handleTestConnection(provider)}
                   disabled={testResults[provider.id] === 'testing'}
                   className={[
-                    "flex items-center gap-1.5 w-full px-3 py-1.5 text-xs rounded transition-colors",
+                    "flex items-center gap-1.5 w-full px-3 py-1.5 text-xs rounded transition-colors cursor-pointer justify-center",
                     testResults[provider.id] === 'success'
                       ? "bg-green-500/20 text-green-400"
                       : testResults[provider.id] === 'error'
@@ -326,7 +326,7 @@ export default function Connections() {
                   ) : (
                     <>
                       <ExternalLink size={12} />
-                      Test Connection
+                      Connect
                     </>
                   )}
                 </button>
