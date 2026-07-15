@@ -1,5 +1,5 @@
 // src/components/activitybar/page.tsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Layers,
   Webhook,
@@ -55,18 +55,38 @@ export default function ActivityBar({
   isSidebarOpen = false,
 }: ActivityBarProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [hasNewResults, setHasNewResults] = useState(false);
+
+  // ฟัง event scanComplete
+  useEffect(() => {
+    const handler = () => {
+      console.log("ActivityBar: scanComplete received!");
+      setHasNewResults(true);
+    };
+
+    window.addEventListener('scanComplete', handler);
+    return () => window.removeEventListener('scanComplete', handler);
+  }, []);
+
+  // ถ้า active เป็น analyzer → ล้าง badge
+  useEffect(() => {
+    if (active === "analyzer") {
+      setHasNewResults(false);
+    }
+  }, [active]);
 
   function handleSelect(id: ActivityId) {
     onSelect?.(id);
+    if (id === "analyzer") {
+      setHasNewResults(false);
+    }
   }
 
   function handleBottomAction(id: BottomActionId) {
     if (id === "connections") {
-      // ✅ ส่ง event ไปให้ useConnectionsListener จัดการ
       const event = new CustomEvent('toggleConnections');
       window.dispatchEvent(event);
     } else if (id === "settings") {
-      // ✅ ส่ง event ไปให้ App.tsx จัดการ
       const event = new CustomEvent('toggleSettings');
       window.dispatchEvent(event);
     }
@@ -78,24 +98,25 @@ export default function ActivityBar({
     return active === id;
   }
 
+  // Debug state
+  console.log("🔍 hasNewResults:", hasNewResults, "active:", active);
+
   return (
     <nav
       aria-label="Primary"
       className="flex h-full w-12 flex-col items-center justify-between border-r border-[#1c211d] bg-[#0b0e0c] py-3"
     >
-      {/* top: primary views */}
       <ul className="flex flex-col items-center gap-1">
         {PRIMARY_ITEMS.map(({ id, label, icon: Icon }) => {
           const isActive = isItemActive(id);
           const isHovered = hoveredId === id;
+          const showBadge = id === "analyzer" && hasNewResults;
 
           return (
             <li key={id} className="relative">
               <button
                 type="button"
                 aria-label={label}
-                aria-current={id !== "terminal" && id !== "box" && isActive ? "page" : undefined}
-                aria-pressed={id === "terminal" || id === "box" ? isActive : undefined}
                 onClick={() => handleSelect(id)}
                 onMouseEnter={() => setHoveredId(id)}
                 onMouseLeave={() => setHoveredId(null)}
@@ -107,15 +128,19 @@ export default function ActivityBar({
                 ].join(" ")}
               >
                 <Icon size={20} strokeWidth={1.75} />
+
+                {/* Badge จุดเหลือง */}
+                {showBadge && (
+                  <span className="absolute top-1 right-1 flex h-2.5 w-2.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#e8ff6b] opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#e8ff6b]" />
+                  </span>
+                )}
               </button>
 
-              {/* tooltip */}
               {isHovered && (
-                <div
-                  role="tooltip"
-                  className="pointer-events-none absolute left-full top-1/2 z-50 ml-2 -translate-y-1/2 whitespace-nowrap rounded-md border border-[#1c211d] bg-[#11150f] px-2 py-1 text-xs font-medium text-[#e8ff6b] shadow-[0_2px_8px_rgba(0,0,0,0.5)]"
-                >
-                  {label}
+                <div className="pointer-events-none absolute left-full top-1/2 z-50 ml-2 -translate-y-1/2 whitespace-nowrap rounded-md border border-[#1c211d] bg-[#11150f] px-2 py-1 text-xs font-medium text-[#e8ff6b] shadow-[0_2px_8px_rgba(0,0,0,0.5)]">
+                  {showBadge ? `${label} (New Results)` : label}
                 </div>
               )}
             </li>
@@ -123,7 +148,6 @@ export default function ActivityBar({
         })}
       </ul>
 
-      {/* bottom: secondary actions */}
       <ul className="flex flex-col items-center gap-1">
         {BOTTOM_ITEMS.map(({ id, label, icon: Icon }) => (
           <li key={id} className="relative">
@@ -139,10 +163,7 @@ export default function ActivityBar({
             </button>
 
             {hoveredId === id && (
-              <div
-                role="tooltip"
-                className="pointer-events-none absolute left-full top-1/2 z-50 ml-2 -translate-y-1/2 whitespace-nowrap rounded-md border border-[#1c211d] bg-[#11150f] px-2 py-1 text-xs font-medium text-[#e8ff6b] shadow-[0_2px_8px_rgba(0,0,0,0.5)]"
-              >
+              <div className="pointer-events-none absolute left-full top-1/2 z-50 ml-2 -translate-y-1/2 whitespace-nowrap rounded-md border border-[#1c211d] bg-[#11150f] px-2 py-1 text-xs font-medium text-[#e8ff6b] shadow-[0_2px_8px_rgba(0,0,0,0.5)]">
                 {label}
               </div>
             )}
