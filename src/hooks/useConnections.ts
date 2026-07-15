@@ -52,15 +52,6 @@ let globalState = {
       model: 'mixtral-8x7b',
       enabled: false,
     },
-    {
-      id: 'ollama',
-      name: 'Ollama (Local)',
-      icon: '/llms/ollama.jpeg',
-      apiKey: '',
-      baseUrl: 'http://localhost:11434',
-      model: 'llama3',
-      enabled: false,
-    },
   ] as LLMProvider[],
 };
 

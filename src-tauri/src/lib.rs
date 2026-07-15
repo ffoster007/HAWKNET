@@ -49,7 +49,6 @@ pub fn run() {
             if !runtime_path.exists() {
                 let default_config = serde_json::json!({
                     "ai_enabled": false,
-                    "passive_only": false,
                     "shodan_enabled": false,
                 });
                 if let Err(e) = std::fs::write(

@@ -1,59 +1,18 @@
 // src/components/workspace/page.tsx
 import { useState, useCallback, useEffect, useRef } from "react";
-import {
-  ReactFlow,
-  Background,
-  Controls,
-  MiniMap,
-  useNodesState,
-  useEdgesState,
-  BackgroundVariant,
-  type Node,
-  type Edge,
-} from "@xyflow/react";
-import "@xyflow/react/dist/style.css";
 
 import { Search, Globe, Server, X, Loader2, AlertTriangle } from "lucide-react";
 import Warning from "../popup/warning";
-import SummaryBar from "./SummaryBar";
-import { nodeTypes } from "./nodes";
 import {
   submitScan,
   getJob,
   type Job,
   type TargetType,
-  type VulnGraph,
-  type GraphNode,
-  type GraphEdge,
 } from "../../lib/tauriApi";
 import { useAnalyzer } from "../../context/AnalyzerContext";
 
 // ── Polling interval (ms) ─────────────────────────────────────────────────────
 const POLL_MS = 1500;
-
-// ── Convert VulnGraph → React Flow nodes/edges ────────────────────────────────
-function toFlowElements(g: VulnGraph): { nodes: Node[]; edges: Edge[] } {
-  const nodes: Node[] = g.nodes.map((n: GraphNode) => ({
-    id: n.id,
-    type: n.type,
-    position: n.position,
-    data: n.data as unknown as Record<string, unknown>,
-  }));
-  
-  const edges: Edge[] = g.edges.map((e: GraphEdge) => ({
-    id: e.id,
-    source: e.source,
-    target: e.target,
-    label: e.label || undefined,
-    type: e.type || "smoothstep",
-    animated: e.animated,
-    style: { stroke: "#2a3029", strokeWidth: 1.5 },
-    labelStyle: { fontSize: 10, fill: "#6b7268" },
-    labelBgStyle: { fill: "#0b0e0c" },
-  }));
-  
-  return { nodes, edges };
-}
 
 export default function Workspace() {
   // ── Scan form state ──────────────────────────────────────────────────────
@@ -70,10 +29,6 @@ export default function Workspace() {
   // ── Analyzer Context ─────────────────────────────────────────────────────
   const { setScanResult, setLoading } = useAnalyzer();
 
-  // ── React Flow state ─────────────────────────────────────────────────────
-  const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
-
   // ── Poll active job ──────────────────────────────────────────────────────
   const startPolling = useCallback((jobId: string) => {
     if (pollRef.current) clearInterval(pollRef.current);
@@ -88,14 +43,13 @@ export default function Workspace() {
           setScanning(false);
           clearInterval(pollRef.current!);
           
-          // ✅ แปลงข้อมูลสำหรับ React Flow
-          const { nodes: n, edges: e } = toFlowElements(job.graph);
-          setNodes(n);
-          setEdges(e);
-          
-          // ✅ ส่งข้อมูลไป Analyzer
+          // ส่งข้อมูลไป Analyzer
           setScanResult(job, job.graph);
           setLoading(false);
+          
+          // แจ้ง ActivityBar ว่าสแกนเสร็จ
+          console.log("Workspace: dispatching scanComplete");
+          window.dispatchEvent(new CustomEvent('scanComplete'));
           
         } else if (job.status === "failed") {
           setScanning(false);
@@ -109,7 +63,7 @@ export default function Workspace() {
         setLoading(false);
       }
     }, POLL_MS);
-  }, [setNodes, setEdges, setScanResult, setLoading]);
+  }, [setScanResult, setLoading]);
 
   useEffect(() => {
     return () => {
@@ -146,8 +100,6 @@ export default function Workspace() {
     setShowWarning(false);
     setScanning(true);
     setActiveJob(null);
-    setNodes([]);
-    setEdges([]);
     
     // ✅ ตั้งค่า loading ใน Analyzer
     setLoading(true);
@@ -164,9 +116,6 @@ export default function Workspace() {
   };
 
   // ── Render ───────────────────────────────────────────────────────────────
-  const hasGraph = nodes.length > 0;
-  const summary = activeJob?.graph?.summary;
-
   return (
     <>
       <div className="flex h-full w-full flex-col bg-[#0b0e0c]">
@@ -250,18 +199,9 @@ export default function Workspace() {
           )}
         </div>
 
-        {/* ── Summary bar (only when graph is ready) ────────────────────── */}
-        {hasGraph && summary && activeJob?.graph && (
-          <SummaryBar
-            summary={summary}
-            aiEnhanced={activeJob.graph.ai_enhanced}
-            target={activeJob.target.value}
-          />
-        )}
-
-        {/* ── React Flow canvas ─────────────────────────────────────────── */}
+        {/* ── Main content area ─────────────────────────────────────────── */}
         <div className="flex-1 min-h-0">
-          {!hasGraph && !scanning ? (
+          {!scanning ? (
             /* Empty state */
             <div className="flex h-full flex-col items-center justify-center gap-3">
               <Search className="h-14 w-14 text-[#1c211d]" />
@@ -269,7 +209,7 @@ export default function Workspace() {
                 Enter a target above to start scanning
               </p>
             </div>
-          ) : scanning && nodes.length === 0 ? (
+          ) : (
             /* Loading state */
             <div className="flex h-full flex-col items-center justify-center gap-3">
               <Loader2 className="h-10 w-10 text-[#e8ff6b] animate-spin" />
@@ -278,50 +218,6 @@ export default function Workspace() {
                 DNS · Ports · Fingerprint · CVE lookup
               </p>
             </div>
-          ) : (
-            <ReactFlow
-              nodes={nodes}
-              edges={edges}
-              onNodesChange={onNodesChange}
-              onEdgesChange={onEdgesChange}
-              nodeTypes={nodeTypes}
-              fitView
-              fitViewOptions={{ padding: 0.15 }}
-              minZoom={0.15}
-              maxZoom={2}
-              proOptions={{ hideAttribution: true }}
-              style={{ background: "#0b0e0c" }}
-            >
-              <Background
-                variant={BackgroundVariant.Dots}
-                color="#1c211d"
-                gap={20}
-                size={1}
-              />
-              <Controls
-                style={{
-                  background: "#11150f",
-                  border: "1px solid #1c211d",
-                  borderRadius: 8,
-                }}
-              />
-              <MiniMap
-                style={{
-                  background: "#11150f",
-                  border: "1px solid #1c211d",
-                }}
-                nodeColor={(n) => {
-                  const sev = (n.data as any)?.severity ?? "";
-                  if (sev === "CRITICAL") return "#ef4444";
-                  if (sev === "HIGH")     return "#fb923c";
-                  if (sev === "MEDIUM")   return "#facc15";
-                  if (sev === "LOW")      return "#60a5fa";
-                  if (n.type === "target") return "#e8ff6b";
-                  return "#2a3029";
-                }}
-                maskColor="rgba(0,0,0,0.5)"
-              />
-            </ReactFlow>
           )}
         </div>
       </div>

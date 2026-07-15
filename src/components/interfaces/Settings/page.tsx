@@ -1,10 +1,9 @@
 import { useState, useEffect } from "react";
-import { Cpu, EyeOff, CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { Cpu, CheckCircle, XCircle, Loader2 } from "lucide-react";
 import { healthCheck, setRuntimeConfig } from "../../../lib/tauriApi";
 
 export default function SettingsPanel() {
   const [aiEnabled, setAiEnabled] = useState(false);
-  const [passiveOnly, setPassiveOnly] = useState(false);
   const [fetchOnline, setFetchOnline] = useState<boolean | null>(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -18,7 +17,7 @@ export default function SettingsPanel() {
     setSaving(true);
     setSaved(false);
     try {
-      await setRuntimeConfig(aiEnabled, passiveOnly);
+      await setRuntimeConfig(aiEnabled);
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch {
@@ -75,24 +74,9 @@ export default function SettingsPanel() {
           <Toggle
             icon={<Cpu size={16} />}
             label="Enable AI analysis"
-            description="Sends findings to Claude / GPT / Gemini for pattern correlation. Requires API keys in .env"
+            description="Sends findings to Claude / GPT / Gemini for pattern correlation."
             checked={aiEnabled}
             onChange={setAiEnabled}
-          />
-        </div>
-
-        {/* ── Scan mode ─────────────────────────────────────────────────── */}
-        <div className="rounded-lg border border-[#1c211d] bg-[#11150f] p-5">
-          <h2 className="mb-4 text-xs font-semibold uppercase tracking-wider text-[#6b7268]">
-            Scan Mode
-          </h2>
-
-          <Toggle
-            icon={<EyeOff size={16} />}
-            label="Passive only"
-            description="Disables active port scanning. DNS recon and fingerprinting still run."
-            checked={passiveOnly}
-            onChange={setPassiveOnly}
           />
         </div>
 
