@@ -1,6 +1,6 @@
 <p align="center">
   <a href="#" target="_blank" rel="noopener noreferrer">
-    <img src="./assets/Banner.png" alt="avacx_banner" />
+    <img src="../../assets/Banner.png" alt="avacx_banner" />
   </a>
 </p>
 
@@ -37,12 +37,12 @@ HAWKNET คือเดสก์ท็อปแอปพลิเคชันแ
 <div align="center">
 <table>
 <tr>
-<td><img src="./assets/A1.png" alt="Screenshot 1" width="100%"/></td>
-<td><img src="./assets/A2.png" alt="Screenshot 2" width="100%"/></td>
+<td><img src="../../assets/A1.png" alt="Screenshot 1" width="100%"/></td>
+<td><img src="../../assets/A2.png" alt="Screenshot 2" width="100%"/></td>
 </tr>
 <tr>
-<td><img src="./assets/A3.png" alt="Screenshot 3" width="100%"/></td>
-<td><img src="./assets/A4.png" alt="Screenshot 4" width="100%"/></td>
+<td><img src="../../assets/A3.png" alt="Screenshot 3" width="100%"/></td>
+<td><img src="../../assets/A4.png" alt="Screenshot 4" width="100%"/></td>
 </tr>
 </table>
 </div>
