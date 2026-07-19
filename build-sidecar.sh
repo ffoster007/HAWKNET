@@ -14,7 +14,7 @@
 set -euo pipefail
 
 BINARY_NAME="hawknet-fetch"
-OUTPUT_DIR="src-tauri/binaries"
+OUTPUT_DIR="apps/src-tauri/binaries"
 
 mkdir -p "$OUTPUT_DIR"
 
@@ -76,5 +76,5 @@ chmod +x "$OUTPUT_PATH" 2>/dev/null || true
 echo "✅ Built: ${OUTPUT_PATH}"
 echo ""
 echo "Next steps:"
-echo "  pnpm tauri dev    → dev mode (sidecar auto-starts)"
+echo "  pnpm dev          → dev mode (sidecar auto-starts)"
 echo "  pnpm tauri build  → production build"
